@@ -6,11 +6,12 @@ import json
 import sys
 from decimal import Decimal
 from awesome_print import ap
+from cached_property import cached_property, cached_property_with_ttl
 
-class EC2InstancePriceError(StandardError):
+class PricingError(StandardError):
     pass
 
-class EC2InstancePrice(object):
+class Pricing(object):
     pricing_url = 'https://pricing.us-east-1.amazonaws.com'
 
     def __init__(self, region_name, instance_type):
@@ -20,11 +21,7 @@ class EC2InstancePrice(object):
         response = ec2.describe_regions()
         regions_names = map(lambda region: region['RegionName'], response['Regions'])
         if not any(region_name == valid_region for valid_region in regions_names):
-            raise EC2InstancePriceError("Invalid region name '{}'".format(region_name))
-
-    @property
-    def demand_price(self):
-        return self.ec2_instant_price()
+            raise PricingError("Invalid region name '{}'".format(region_name))
 
     def instance_price(self, offer_code, offer_code_filter):
         region_index_url = "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/{}/current/region_index.json".format(offer_code)
@@ -56,7 +53,11 @@ class EC2InstancePrice(object):
     def emr_instance_price(self):
         return self.instance_price('ElasticMapReduce', lambda product: product['attributes']['softwareType'] == 'EMR')
 
-    @property
+    @cached_property_with_ttl(ttl=3600)
+    def demand_price(self):
+        return self.ec2_instant_price()
+
+    @cached_property_with_ttl(ttl=10)
     def lowest_spot_price(self):
         ec2 = boto3.client('ec2', region_name=self.region_name)
         start_time = datetime.datetime.now(pytz.UTC) - datetime.timedelta(minutes=15)
@@ -81,14 +82,21 @@ class EC2InstancePrice(object):
         if latest_spot_prices:
             lowest_spot_price = min(latest_spot_prices, key=lambda price: price['SpotPrice'])
         else:
-            raise EC2InstancePriceError("Could not find any spot price for instance type {0} in region {1}".format(self.instance_type,region_name))
+            raise PricingError("Could not find any spot price for instance type {0} in region {1}".format(self.instance_type,region_name))
         return lowest_spot_price
 
     @property
     def bid_price(self):
         return "%.3f" % self.demand_price
 
-    def should_use_spot_price():
-        pass
+    @property
+    def spot_price(self):
+        return self.lowest_spot_price['SpotPrice']
 
+    @property
+    def availability_zone(self):
+        return self.lowest_spot_price['AvailabilityZone']
+
+    def should_use_spot_price(self):
+        return self.spot_price < self.demand_price
 
