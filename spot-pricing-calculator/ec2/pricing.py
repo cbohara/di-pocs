@@ -7,10 +7,10 @@ import sys
 from decimal import Decimal
 from awesome_print import ap
 
-class EMRInstancePriceError(StandardError):
+class EC2InstancePriceError(StandardError):
     pass
 
-class EMRInstancePrice(object):
+class EC2InstancePrice(object):
     pricing_url = 'https://pricing.us-east-1.amazonaws.com'
 
     def __init__(self, region_name, instance_type):
@@ -20,32 +20,41 @@ class EMRInstancePrice(object):
         response = ec2.describe_regions()
         regions_names = map(lambda region: region['RegionName'], response['Regions'])
         if not any(region_name == valid_region for valid_region in regions_names):
-            raise EMRInstancePriceError("Invalid region name '{}'".format(region_name))
+            raise EC2InstancePriceError("Invalid region name '{}'".format(region_name))
 
     @property
     def demand_price(self):
-        region_index_url = self.pricing_url + "/offers/v1.0/aws/ElasticMapReduce/current/region_index.json"
-        response = urllib.urlopen(region_index_url)    
+        return self.ec2_instant_price()
+
+    def instance_price(self, offer_code, offer_code_filter):
+        region_index_url = "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/{}/current/region_index.json".format(offer_code)
+        response = urllib.urlopen(region_index_url)
         data = json.loads(response.read())
 
         if data['regions'].has_key(self.region_name):
             index_url = data['regions'][self.region_name]['currentVersionUrl']
-            index_url = self.pricing_url + index_url
+            index_url = 'https://pricing.us-east-1.amazonaws.com' + index_url
         else:
-            raise EMRInstancePriceError("Could not find pricing list for region '{}'".format(self.region_name))
+            raise PricingError("Could not find pricing list for region '{}'".format(region_name))
 
         response = urllib.urlopen(index_url)
         data = json.loads(response.read())
         products = data['products'].values()
-        products = filter(lambda product: product['attributes']['instanceType'] == self.instance_type and product['attributes']['softwareType'] == 'EMR', products)
+        products = filter(lambda product: product['attributes'].has_key('instanceType') and product['attributes']['instanceType'] == self.instance_type and offer_code_filter(product), products)
 
         if products:
             sku = products[0]['sku']
+            print("sku: {}".format(sku))
             demand_price = data['terms']['OnDemand'][sku].values()[0]['priceDimensions'].values()[0]['pricePerUnit']['USD']
             return Decimal(demand_price)
         else:
-            raise EMRInstancePriceError("Instance type '{}' is not available for use in EMR clusters".format(self.instance_type))
+            raise PricingError("Instance type '{}' is not available for use in EMR clusters".format(self.instance_type))
 
+    def ec2_instant_price(self):
+        return self.instance_price('AmazonEC2', lambda product: product['attributes']['operatingSystem'] == 'Linux' and product['attributes']['tenancy'] == 'Shared')
+
+    def emr_instance_price(self):
+        return self.instance_price('ElasticMapReduce', lambda product: product['attributes']['softwareType'] == 'EMR')
 
     @property
     def lowest_spot_price(self):
@@ -72,10 +81,14 @@ class EMRInstancePrice(object):
         if latest_spot_prices:
             lowest_spot_price = min(latest_spot_prices, key=lambda price: price['SpotPrice'])
         else:
-            raise EMRInstancePriceError("Could not find any spot price for instance type {0} in region {1}".format(self.instance_type,region_name))
+            raise EC2InstancePriceError("Could not find any spot price for instance type {0} in region {1}".format(self.instance_type,region_name))
         return lowest_spot_price
 
+    @property
+    def bid_price(self):
+        return "%.3f" % self.demand_price
 
-# from emr.pricing import EMRInstancePrice, EMRInstancePriceError
-# price = EMRInstancePrice(region_name='us-west-1',instance_type='r3.2xlarge')
+    def should_use_spot_price():
+        pass
+
 
