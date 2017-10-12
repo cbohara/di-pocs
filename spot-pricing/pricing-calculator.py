@@ -6,7 +6,7 @@ import json
 import sys
 from decimal import Decimal
 from awesome_print import ap
-from ec2.pricing import Pricing, PricingError
+from vrvm_new.pricing import Pricing, PricingError
 
 
 if len(sys.argv) < 3:

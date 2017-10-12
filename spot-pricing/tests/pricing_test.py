@@ -1,6 +1,6 @@
 import mock
 import unittest
-from ec2.pricing import Pricing, PricingError
+from vrvm_new.pricing import Pricing, PricingError
 
 class PricingTest(unittest.TestCase):
 
@@ -25,7 +25,7 @@ class PricingTest(unittest.TestCase):
         except PricingError, pe:
             self.assertEqual("Instance type {0} is not available for use in AmazonEC2".format(instance_type), str(pe))
 
-    @mock.patch('ec2.pricing.urllib.urlopen', autospec=True)
+    @mock.patch('vrvm_new.pricing.urllib.urlopen', autospec=True)
     def test_price_list_not_found(self, urlopen):
         urlopen.return_value.read.return_value = '{"regions": {"us-west-1": null, "us-west-2": null} }'
 
@@ -35,4 +35,4 @@ class PricingTest(unittest.TestCase):
             self.assertTrue('Could not find pricing list for region' in str(pe))
 
 if __name__ == '__main__':
-   unittest.main()
+    unittest.main()
