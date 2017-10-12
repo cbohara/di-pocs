@@ -24,13 +24,13 @@ class Pricing(object):
             raise PricingError("Invalid region name '{}'".format(region_name))
 
     def instance_price(self, offer_code, offer_code_filter):
-        region_index_url = "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/{}/current/region_index.json".format(offer_code)
+        region_index_url = "{0}/offers/v1.0/aws/{1}/current/region_index.json".format(Pricing.pricing_url,offer_code)
         response = urllib.urlopen(region_index_url)
         data = json.loads(response.read())
 
         if data['regions'].has_key(self.region_name):
             index_url = data['regions'][self.region_name]['currentVersionUrl']
-            index_url = 'https://pricing.us-east-1.amazonaws.com' + index_url
+            index_url = Pricing.pricing_url + index_url
         else:
             raise PricingError("Could not find pricing list for region '{}'".format(region_name))
 
@@ -41,11 +41,10 @@ class Pricing(object):
 
         if products:
             sku = products[0]['sku']
-            print("sku: {}".format(sku))
             demand_price = data['terms']['OnDemand'][sku].values()[0]['priceDimensions'].values()[0]['pricePerUnit']['USD']
             return Decimal(demand_price)
         else:
-            raise PricingError("Instance type '{}' is not available for use in EMR clusters".format(self.instance_type))
+            raise PricingError("Instance type {0} is not available for use in {1}".format(self.instance_type, offer_code))
 
     def ec2_instant_price(self):
         return self.instance_price('AmazonEC2', lambda product: product['attributes']['operatingSystem'] == 'Linux' and product['attributes']['tenancy'] == 'Shared')

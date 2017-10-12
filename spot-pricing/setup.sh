@@ -15,3 +15,9 @@ fi
 source venv/bin/activate
 
 pip install -r requirements.txt
+
+if [ -z "$PYTHONPATH" ]; then
+	export PYTHONPATH=.
+else
+	export PYTHONPATH=.:$PYTHONPATH
+fi
