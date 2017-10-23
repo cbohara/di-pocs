@@ -76,7 +76,7 @@ class Pricing(object):
         if latest_spot_prices:
             lowest_spot_price = min(latest_spot_prices, key=lambda price: price['SpotPrice'])
         else:
-            raise PricingError("Could not find any spot price for instance type {0} in region {1}".format(self.instance_type,region_name))
+            raise PricingError("Could not find any spot price for instance type {0} in region {1}".format(self.instance_type, self.region_name))
         return lowest_spot_price
 
     @property

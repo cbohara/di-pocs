@@ -12,11 +12,17 @@ class PricingTest(unittest.TestCase):
         self.assertTrue(pricing.demand_price > 0)
         self.assertTrue(str(pricing.bid_price) in "${}".format(pricing.demand_price))
 
-    def test_invalid_instance_type(self):
+    def test_invalid_instance_type_demand_price(self):
         region_name, instance_type = 'us-east-1', 'x100.100xlarge'
         with self.assertRaisesRegexp(PricingError, "Instance type {0} is not available for use in AmazonEC2".format(instance_type)):
             pricing = Pricing(region_name=region_name, instance_type=instance_type)
             pricing.demand_price
+
+    def test_invalid_instance_type_spot_price(self):
+        region_name, instance_type = 'us-east-1', 'x100.100xlarge'
+        with self.assertRaisesRegexp(PricingError, "Could not find any spot price for instance type {0} in region {1}".format(instance_type, region_name)):
+            pricing = Pricing(region_name=region_name, instance_type=instance_type)
+            pricing.lowest_spot_price
 
     @mock.patch('vrvm_new.pricing.urllib.urlopen', autospec=True)
     def test_price_list_not_found(self, urlopen):
