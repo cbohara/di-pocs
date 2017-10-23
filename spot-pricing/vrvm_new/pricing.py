@@ -27,7 +27,7 @@ class Pricing(object):
             index_url = data['regions'][self.region_name]['currentVersionUrl']
             index_url = Pricing.pricing_url + index_url
         else:
-            raise PricingError("Could not find pricing list for region '{}'".format(region_name))
+            raise PricingError("Could not find pricing list for region '{}'".format(self.region_name))
 
         response = urllib.urlopen(index_url)
         data = json.loads(response.read())

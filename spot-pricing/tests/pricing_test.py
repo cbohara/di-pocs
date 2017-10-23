@@ -22,11 +22,9 @@ class PricingTest(unittest.TestCase):
     @mock.patch('vrvm_new.pricing.urllib.urlopen', autospec=True)
     def test_price_list_not_found(self, urlopen):
         urlopen.return_value.read.return_value = '{"regions": {"us-west-1": null, "us-west-2": null} }'
-
-        try:
+        with self.assertRaisesRegexp(PricingError, 'Could not find pricing list for region'):
             pricing = Pricing(region_name='us-east-1', instance_type='r3.2xlarge')
-        except PricingError, pe:
-            self.assertTrue('Could not find pricing list for region' in str(pe))
+            pricing.demand_price
 
 if __name__ == '__main__':
     unittest.main()
