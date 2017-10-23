@@ -1,11 +1,15 @@
 #!/bin/bash
 
 if [ -z $(which pip) ]; then
-	sudo easy_install pip
+	echo "ERROR: You need to have 'pip' installed in order to install 'virtualenv'"
+	echo "HINT: You may need to run 'easy_install pip' or 'sudo easy_install pip' depending on your environment"
+	exit 1
 fi
 
 if [ -z $(which virtualenv) ]; then
-	sudo pip install virtualenv
+	echo "ERROR: You need to have 'virtualenv' installed"
+	echo "HINT: You may need to run 'pip install virtualenv' or 'sudo pip install virtualenv' depending on your environment"
+	exit 1
 fi
 
 if [ ! -d ./venv ]; then
