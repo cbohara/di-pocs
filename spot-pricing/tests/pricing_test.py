@@ -13,11 +13,10 @@ class PricingTest(unittest.TestCase):
         self.assertTrue(str(pricing.bid_price) in "${}".format(pricing.demand_price))
 
     def test_invalid_instance_type(self):
-        try:
-            region_name, instance_type = 'us-east-1', 'x100.100xlarge'
+        region_name, instance_type = 'us-east-1', 'x100.100xlarge'
+        with self.assertRaisesRegexp(PricingError, "Instance type {0} is not available for use in AmazonEC2".format(instance_type)):
             pricing = Pricing(region_name=region_name, instance_type=instance_type)
-        except PricingError, pe:
-            self.assertEqual("Instance type {0} is not available for use in AmazonEC2".format(instance_type), str(pe))
+            pricing.demand_price
 
     @mock.patch('vrvm_new.pricing.urllib.urlopen', autospec=True)
     def test_price_list_not_found(self, urlopen):
