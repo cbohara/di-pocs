@@ -12,12 +12,6 @@ class PricingTest(unittest.TestCase):
         self.assertTrue(pricing.demand_price > 0)
         self.assertTrue(str(pricing.bid_price) in "${}".format(pricing.demand_price))
 
-    def test_invalid_region(self):
-        try:
-            pricing = Pricing(region_name='us-north-1', instance_type='r3.2xlarge')
-        except PricingError, pe:
-            self.assertTrue('Invalid region name' in str(pe))
-
     def test_invalid_instance_type(self):
         try:
             region_name, instance_type = 'us-east-1', 'x100.100xlarge'

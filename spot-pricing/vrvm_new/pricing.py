@@ -17,11 +17,6 @@ class Pricing(object):
     def __init__(self, region_name, instance_type):
         self.region_name = region_name
         self.instance_type = instance_type
-        ec2 = boto3.client('ec2')
-        response = ec2.describe_regions()
-        regions_names = map(lambda region: region['RegionName'], response['Regions'])
-        if not any(region_name == valid_region for valid_region in regions_names):
-            raise PricingError("Invalid region name '{}'".format(region_name))
 
     def instance_price(self, offer_code, offer_code_filter):
         region_index_url = "{0}/offers/v1.0/aws/{1}/current/region_index.json".format(Pricing.pricing_url,offer_code)
