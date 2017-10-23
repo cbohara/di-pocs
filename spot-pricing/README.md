@@ -3,7 +3,7 @@
 For a given EC2 instance type and AWS region it does the following:
 
  * Get the demand price
- * Determine lowest spot price across availability regions
+ * Determine lowest spot price across availability zones for the given region
  * Determines if you should use spot pricing or not based on above items
  * Returns the availability zone for the lowest spot price and the bid price
 
