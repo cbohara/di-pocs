@@ -94,3 +94,21 @@ class Pricing(object):
     def should_use_spot_price(self):
         return self.spot_price < self.demand_price
 
+
+def find_reserved_instances(region_name, instance_type):
+    ec2 = boto3.client('ec2', region_name=region_name)
+    response = ec2.describe_reserved_instances(Filters=[ {'Name':'instance-type','Values':[instance_type]}, {'Name':'state', 'Values':['active']} ])
+    return response['ReservedInstances']
+
+def find_available_reserved_instances(region_name, instance_type):
+    ec2 = boto3.client('ec2', region_name=region_name)
+    response = ec2.describe_reserved_instances(Filters=[ {'Name':'instance-type','Values':[instance_type]}, {'Name':'state', 'Values':['active']}, {'Name':'scope', 'Values':['Region']} ])
+    return response['ReservedInstances']
+
+def have_available_reserved_instances(region_name, instance_type, desired_instance_count):
+    reserved_instances = find_available_reserved_instances(region_name, instance_type)
+    available_instance_count = sum(map(lambda i: i['InstanceCount'], reserved_instances))
+    return available_instance_count >= desired_instance_count
+
+
+
