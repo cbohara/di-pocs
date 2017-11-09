@@ -18,6 +18,9 @@ class Pricing(object):
         self.region_name = region_name
         self.instance_type = instance_type
 
+    def __repr__(self):
+        return "Pricing(%s, %s)" % (self.region_name, self.instance_type)
+
     def instance_price(self, offer_code, offer_code_filter):
         region_index_url = "{0}/offers/v1.0/aws/{1}/current/region_index.json".format(Pricing.pricing_url,offer_code)
         response = urllib.urlopen(region_index_url)
