@@ -69,9 +69,10 @@ class Pricing(object):
         latest_spot_prices = []
 
         for availability_zone in availability_zones:
-            recent_spot_prices = filter(lambda price: price['AvailabilityZone'] == availability_zone and price['Timestamp'] >= start_time, instance_spot_prices)
-            if recent_spot_prices:
-                spot_prices_sorted_by_time = sorted(recent_spot_prices, key=lambda price: price['Timestamp'])
+            #recent_spot_prices = filter(lambda price: price['AvailabilityZone'] == availability_zone and price['Timestamp'] >= start_time, instance_spot_prices)
+            availability_zone_spot_prices = filter(lambda price: price['AvailabilityZone'] == availability_zone, instance_spot_prices)
+            if availability_zone_spot_prices:
+                spot_prices_sorted_by_time = sorted(availability_zone_spot_prices, key=lambda price: price['Timestamp'])
                 latest_spot_price = spot_prices_sorted_by_time[-1]
                 latest_spot_price['SpotPrice'] = Decimal(latest_spot_price['SpotPrice'])
                 latest_spot_prices.append(latest_spot_price)
