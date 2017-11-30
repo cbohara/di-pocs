@@ -6,7 +6,7 @@ import json
 import sys
 from decimal import Decimal
 from awesome_print import ap
-from vrvm_new.pricing import Pricing, PricingError, find_available_reserved_instances
+from vrvm_new.pricing import Pricing, PricingError, find_reserved_instances, find_running_instances
 
 
 if len(sys.argv) < 4:
@@ -22,20 +22,26 @@ print("Instance Type: {}".format(instance_type))
 print("Instance Count: {}\n".format(instance_count))
 
 try:
-   pricing = Pricing(region_name=region_name, instance_type=instance_type)
-
-   print("Demand Price: {}\n".format(pricing.demand_price))
-
-   reserved_instances = find_available_reserved_instances(region_name=region_name, instance_type=instance_type)
+   reserved_instances = find_reserved_instances(region_name=region_name, instance_type=instance_type)
    reserved_instances_count = sum(map(lambda i: i['InstanceCount'], reserved_instances))
-   print("Reserved Instances Available: {}\n".format(reserved_instances_count))
 
-   print("Lowest Spot Price: ")
-   ap(pricing.lowest_spot_price)
+   running_instances = find_running_instances(region_name=region_name, instance_type=instance_type)
+   running_instances_count = len(running_instances)
 
-   if reserved_instances_count >= instance_count:
+   reserved_available_count = reserved_instances_count - running_instances_count
+
+   print("Running Instances: {}".format(running_instances_count))
+   print("Reserved Instances: {}".format(reserved_instances_count))
+
+   if reserved_available_count >= instance_count:
       print("\nYou should not use spot pricing. There are enough reserved instances.\n")
    else:
+      pricing = Pricing(region_name=region_name, instance_type=instance_type)
+      print('')
+      print("Demand Price: {}".format(pricing.demand_price))
+      print("Lowest Spot Price: ")
+      ap(pricing.lowest_spot_price)
+
       if pricing.should_use_spot_price():
          print("\nYou should use spot pricing with a bid price of ${0} in availability zone '{1}'\n".format(pricing.bid_price, pricing.availability_zone))
       else:
